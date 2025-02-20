@@ -18,6 +18,24 @@
     <item>
      <widget class="QTableWidget" name="tableWidget"/>
     </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="addCoffeeButton">
+        <property name="text">
+         <string>Добавить кофе</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="editCoffeeButton">
+        <property name="text">
+         <string>Редактировать кофе</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar"/>

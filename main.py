@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QWidget
 from PyQt6 import uic
 import sqlite3
 
@@ -23,6 +23,68 @@ def create_database():
     conn.close()
 
 
+class AddEditCoffeeForm(QWidget):
+    def __init__(self, coffee_id=None):
+        super().__init__()
+
+        self.ui = uic.loadUi("addEditCoffeeForm.ui", self)
+
+        self.coffee_id = coffee_id
+
+        if coffee_id is not None:
+            self.load_data()
+
+    def load_data(self):
+        conn = sqlite3.connect("coffee.sqlite")
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM coffee WHERE id = ?", (self.coffee_id,))
+        row = cursor.fetchone()
+
+        self.ui.nameLineEdit.setText(row[1])
+        self.ui.roastLevelLineEdit.setText(row[2])
+        self.ui.grindLineEdit.setText(row[3])
+        self.ui.tasteDescriptionLineEdit.setText(row[4])
+        self.ui.priceLineEdit.setText(str(row[5]))
+        self.ui.packageVolumeLineEdit.setText(str(row[6]))
+
+        conn.close()
+
+    def save_data(self):
+        conn = sqlite3.connect("coffee.sqlite")
+        cursor = conn.cursor()
+
+        if self.coffee_id is None:
+            cursor.execute("""
+                INSERT INTO coffee (name, roast, type, description, price, volume)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                self.ui.nameLineEdit.text(),
+                self.ui.roastLevelLineEdit.text(),
+                self.ui.grindLineEdit.text(),
+                self.ui.tasteDescriptionLineEdit.text(),
+                float(self.ui.priceLineEdit.text()),
+                float(self.ui.packageVolumeLineEdit.text())
+            ))
+        else:
+            cursor.execute("""
+                UPDATE coffee
+                SET name = ?, roast = ?, type = ?, description = ?, price = ?, volume = ?
+                WHERE id = ?
+            """, (
+                self.ui.nameLineEdit.text(),
+                self.ui.roastLevelLineEdit.text(),
+                self.ui.grindLineEdit.text(),
+                self.ui.tasteDescriptionLineEdit.text(),
+                float(self.ui.priceLineEdit.text()),
+                float(self.ui.packageVolumeLineEdit.text()),
+                self.coffee_id
+            ))
+
+        conn.commit()
+        conn.close()
+
+
 class Espresso(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -33,6 +95,9 @@ class Espresso(QMainWindow):
         self.ui = uic.loadUi("main.ui", self)
 
         self.load_data()
+
+        self.ui.addCoffeeButton.clicked.connect(self.add_coffee)
+        self.ui.editCoffeeButton.clicked.connect(self.edit_coffee)
 
     def load_data(self):
         conn = sqlite3.connect("coffee.sqlite")
@@ -52,6 +117,23 @@ class Espresso(QMainWindow):
             for j, value in enumerate(row):
                 self.ui.tableWidget.setItem(i, j, QTableWidgetItem(str(value)))
         conn.close()
+
+    def add_coffee(self):
+        form = AddEditCoffeeForm()
+        form.show()
+        form.ui.saveButton.clicked.connect(form.save_data)
+        form.ui.saveButton.clicked.connect(self.load_data)
+        form.ui.saveButton.clicked.connect(form.close)
+
+    def edit_coffee(self):
+        row = self.ui.tableWidget.currentRow()
+        if row != -1:
+            coffee_id = int(self.ui.tableWidget.item(row, 0).text())
+            form = AddEditCoffeeForm(coffee_id)
+            form.show()
+            form.ui.saveButton.clicked.connect(form.save_data)
+            form.ui.saveButton.clicked.connect(self.load_data)
+            form.ui.saveButton.clicked.connect(form.close)
 
 
 if __name__ == "__main__":
