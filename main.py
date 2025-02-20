@@ -1,11 +1,12 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QWidget
-from PyQt6 import uic
 import sqlite3
+from mainui import Ui_MainWindow
+from addEditCoffeeFormUi import Ui_AddEditCoffeeForm
 
 
 def create_database():
-    conn = sqlite3.connect("coffee.sqlite")
+    conn = sqlite3.connect("data/coffee.sqlite")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -27,7 +28,8 @@ class AddEditCoffeeForm(QWidget):
     def __init__(self, coffee_id=None):
         super().__init__()
 
-        self.ui = uic.loadUi("addEditCoffeeForm.ui", self)
+        self.ui = Ui_AddEditCoffeeForm()
+        self.ui.setupUi(self)
 
         self.coffee_id = coffee_id
 
@@ -35,7 +37,7 @@ class AddEditCoffeeForm(QWidget):
             self.load_data()
 
     def load_data(self):
-        conn = sqlite3.connect("coffee.sqlite")
+        conn = sqlite3.connect("data/coffee.sqlite")
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM coffee WHERE id = ?", (self.coffee_id,))
@@ -51,7 +53,7 @@ class AddEditCoffeeForm(QWidget):
         conn.close()
 
     def save_data(self):
-        conn = sqlite3.connect("coffee.sqlite")
+        conn = sqlite3.connect("data/coffee.sqlite")
         cursor = conn.cursor()
 
         if self.coffee_id is None:
@@ -92,7 +94,8 @@ class Espresso(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
         self.setWindowTitle("Espresso")
 
-        self.ui = uic.loadUi("main.ui", self)
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
         self.load_data()
 
@@ -100,7 +103,7 @@ class Espresso(QMainWindow):
         self.ui.editCoffeeButton.clicked.connect(self.edit_coffee)
 
     def load_data(self):
-        conn = sqlite3.connect("coffee.sqlite")
+        conn = sqlite3.connect("data/coffee.sqlite")
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM coffee")
@@ -119,21 +122,21 @@ class Espresso(QMainWindow):
         conn.close()
 
     def add_coffee(self):
-        form = AddEditCoffeeForm()
-        form.show()
-        form.ui.saveButton.clicked.connect(form.save_data)
-        form.ui.saveButton.clicked.connect(self.load_data)
-        form.ui.saveButton.clicked.connect(form.close)
+        self.form = AddEditCoffeeForm()
+        self.form.show()
+        self.form.ui.saveButton.clicked.connect(self.form.save_data)
+        self.form.ui.saveButton.clicked.connect(self.load_data)
+        self.form.ui.saveButton.clicked.connect(self.form.close)
 
     def edit_coffee(self):
         row = self.ui.tableWidget.currentRow()
         if row != -1:
             coffee_id = int(self.ui.tableWidget.item(row, 0).text())
-            form = AddEditCoffeeForm(coffee_id)
-            form.show()
-            form.ui.saveButton.clicked.connect(form.save_data)
-            form.ui.saveButton.clicked.connect(self.load_data)
-            form.ui.saveButton.clicked.connect(form.close)
+            self.form = AddEditCoffeeForm(coffee_id)
+            self.form.show()
+            self.form.ui.saveButton.clicked.connect(self.form.save_data)
+            self.form.ui.saveButton.clicked.connect(self.load_data)
+            self.form.ui.saveButton.clicked.connect(self.form.close)
 
 
 if __name__ == "__main__":
@@ -142,3 +145,4 @@ if __name__ == "__main__":
     window = Espresso()
     window.show()
     sys.exit(app.exec())
+    
